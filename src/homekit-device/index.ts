@@ -101,6 +101,12 @@ export default abstract class HomekitDevice {
       if (service instanceof platform.Service.Lightbulb) return;
       if (service instanceof platform.Service.Outlet) return;
       if (service instanceof platform.Service.Switch) return;
+      if (platform.customCharacteristics) {
+        // if (service instanceof platform.eve.Services.Consumption) return;
+        // if (service instanceof platform.HistoryService) return;
+        if (/E863F([0-9A-F]{3})-079E-48FF-8F27-9C2605A29F52/.test(service.UUID))
+          return;
+      }
       this.log.warn(
         `Removing stale Service: ${this.lsc(service)} uuid:[%s] subtype:[%s]`,
         service.UUID,

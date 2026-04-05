@@ -15,6 +15,8 @@ import chalk from 'chalk';
 import { satisfies } from 'semver';
 import { Client } from 'tplink-smarthome-api';
 import type { Sysinfo } from 'tplink-smarthome-api';
+import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
+import Fakegato from 'fakegato-history';
 
 import { parseConfig } from './config';
 import type { TplinkSmarthomeConfig } from './config';
@@ -39,6 +41,10 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
   public readonly Characteristic;
 
   public customCharacteristics: ReturnType<typeof Characteristics>;
+
+  public readonly HistoryService;
+
+  public readonly eve;
 
   public config: TplinkSmarthomeConfig;
 
@@ -84,6 +90,8 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
+    this.HistoryService = Fakegato(this.api);
+    this.eve = new EveHomeKitTypes(this.api);
 
     this.log.debug('config.json: %j', config);
     this.config = parseConfig(config);

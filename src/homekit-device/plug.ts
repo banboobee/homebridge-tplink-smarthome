@@ -12,6 +12,10 @@ import { deferAndCombine, getOrAddCharacteristic } from '../utils';
 export default class HomeKitDevicePlug extends HomekitDevice {
   private desiredPowerState?: boolean;
 
+  private lastActivation?: number;
+
+  private historyService;
+
   constructor(
     platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
@@ -70,6 +74,87 @@ export default class HomeKitDevicePlug extends HomekitDevice {
       this.addEnergyCharacteristics(primaryService);
     } else {
       this.removeEnergyCharacteristics(primaryService);
+    }
+
+    if (
+      this.category === Categories.OUTLET &&
+      platform.config.addCustomCharacteristics
+    ) {
+      const accessory = this.homebridgeAccessory;
+      const { Characteristic, Service, api, eve } = this.platform;
+      const outlet =
+        accessory.getService(Service.Outlet) ??
+        accessory.addService(Service.Outlet, this.name);
+      this.historyService = new this.platform.HistoryService(
+        'custom',
+        accessory,
+        {
+          storage: 'fs',
+          filename: `${outlet?.displayName ?? 'outlet'}_persist.json`,
+        }
+      );
+      // this.tplinkDevice.getSysInfo();	// ???
+      // this.log.info(`initial state: ${this.tplinkDevice.relayState}`);
+      this.historyService?.addEntry({
+        time: Math.round(new Date().valueOf() / 1000),
+        status: this.tplinkDevice.relayState ? 1 : 0,
+      });
+
+      getOrAddCharacteristic(outlet, Characteristic.On).on(
+        'change',
+        async (event) => {
+          // this.log.info(`On: from:${event.oldValue} to:${event.newValue} reason:${event.reason}`);
+          if (event.newValue !== event.oldValue && event.reason === 'update') {
+            this.log.info(`On change: ${event.newValue}`);
+            const time = Math.round(new Date().valueOf() / 1000);
+            if (event.newValue) {
+              this.lastActivation = time;
+              // this.log.info(`lastActivation: ${this.lastActivation}`);
+            }
+            this.log.info(`addEntry: {time:${time} status:${event.newValue}}`);
+            this.historyService?.addEntry({
+              time,
+              status: event.newValue ? 1 : 0,
+            });
+          }
+        }
+      );
+
+      getOrAddCharacteristic(outlet, eve.Characteristics.LastActivation).onGet(
+        () => {
+          const initialTime = this.historyService?.getInitialTime();
+          const lastTime =
+            this.lastActivation && initialTime
+              ? Math.max(0, this.lastActivation - initialTime)
+              : 0;
+          return lastTime;
+        }
+      );
+
+      getOrAddCharacteristic(outlet, Characteristic.LockPhysicalControls).onGet(
+        () => {
+          return Characteristic.LockPhysicalControls.CONTROL_LOCK_ENABLED;
+        }
+      );
+
+      const dummy =
+        accessory.getService(eve.Services.Consumption) ??
+        accessory.addService(
+          eve.Services.Consumption,
+          `${this.name} Consumption`
+        );
+      dummy.setHiddenService(true);
+      getOrAddCharacteristic(
+        dummy,
+        eve.Characteristics.TotalConsumption
+      ).setProps({
+        perms: [
+          api.hap.Perms.PAIRED_READ,
+          api.hap.Perms.NOTIFY,
+          api.hap.Perms.HIDDEN,
+        ],
+      });
+      // dummy.updateCharacteristic(eve.Characteristics.TotalConsumption, 0);
     }
 
     this.getSysInfo = deferAndCombine((requestCount) => {
