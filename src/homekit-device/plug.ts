@@ -90,7 +90,7 @@ export default class HomeKitDevicePlug extends HomekitDevice {
         accessory,
         {
           storage: 'fs',
-          filename: `${outlet?.displayName ?? 'outlet'}_persist.json`,
+          // filename: `${outlet?.displayName ?? 'outlet'}_persist.json`,
         }
       );
       // this.tplinkDevice.getSysInfo();	// ???
