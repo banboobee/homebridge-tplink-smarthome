@@ -105,13 +105,13 @@ export default class HomeKitDevicePlug extends HomekitDevice {
         async (event) => {
           // this.log.info(`On: from:${event.oldValue} to:${event.newValue} reason:${event.reason}`);
           if (event.newValue !== event.oldValue && event.reason === 'update') {
-            this.log.info(`On change: ${event.newValue}`);
+            // this.log.info(`On change: ${event.newValue}`);
             const time = Math.round(new Date().valueOf() / 1000);
             if (event.newValue) {
               this.lastActivation = time;
               // this.log.info(`lastActivation: ${this.lastActivation}`);
             }
-            this.log.info(`addEntry: {time:${time} status:${event.newValue}}`);
+            // this.log.info(`addEntry: {time:${time} status:${event.newValue}}`);
             this.historyService?.addEntry({
               time,
               status: event.newValue ? 1 : 0,
