@@ -96,7 +96,7 @@ export default abstract class HomekitDevice {
     }
 
     // Remove Old Services
-    this.homebridgeAccessory.services.forEach((service) => {
+    [...this.homebridgeAccessory.services].forEach((service) => {
       if (service instanceof platform.Service.AccessoryInformation) return;
       if (service instanceof platform.Service.Lightbulb) return;
       if (service instanceof platform.Service.Outlet) return;
