@@ -13,8 +13,8 @@ import type {
 
 import chalk from 'chalk';
 import { satisfies } from 'semver';
-import { Client } from 'tplink-smarthome-api';
-import type { Sysinfo } from 'tplink-smarthome-api';
+import { Client } from '../tplink-smarthome-api';
+import type { Sysinfo } from '../tplink-smarthome-api';
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 import Fakegato from 'fakegato-history';
 
@@ -318,9 +318,14 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
         `[${platformAccessory.displayName}]`
       )})`
     );
-    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-      platformAccessory,
-    ]);
+    try {
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        platformAccessory,
+      ]);
+    } catch (e) {
+      this.log(`${chalk.red(String(e))}`);
+      throw e;
+    }
   }
 
   /**

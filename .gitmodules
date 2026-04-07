@@ -1,0 +1,3 @@
+[submodule "tplink-smarthome-api"]
+	path = tplink-smarthome-api
+	url = https://github.com/banboobee/tplink-smarthome-api.git
